@@ -1,8 +1,7 @@
 package edu.tanelvari.java.pinks;
 
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.paint.Color;
+import java.awt.geom.Rectangle2D;
 
 public class Sprite {
 
@@ -15,17 +14,15 @@ public class Sprite {
     private double velX;
     private double velY;
 
-    private static final Color fillColor = Color.rgb(250, 250, 250);
-
-    public Sprite (double x, double y, double w, double h) {
+    public Sprite (double x, double y, double w, double h, double vx, double vy) {
         posX = x;
         posY = y;
 
         width = w;
         height = h;
 
-        velX = 10;
-        velY = 10;
+        velX = vx;
+        velY = vy;
     }
 
     public void updateSpritePosition(){
@@ -34,7 +31,7 @@ public class Sprite {
     }
 
     public void renderSprite(GraphicsContext gc){
-        gc.setFill(fillColor);
+        gc.setFill(Constants.mainColor);
         gc.fillRect(posX, posY, width, height);
     }
 
@@ -68,5 +65,13 @@ public class Sprite {
 
     public double getY() {
         return posY;
+    }
+
+    public Rectangle2D getBounds(){
+        return new Rectangle2D.Double(posX, posY, width, height);
+    }
+
+    public boolean intersects(Sprite s){
+        return s.getBounds().intersects(this.getBounds());
     }
 }
