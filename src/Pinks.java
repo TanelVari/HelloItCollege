@@ -1,6 +1,5 @@
 package edu.tanelvari.java.pinks;
 
-import com.sun.jdi.LongValue;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -18,13 +17,13 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.io.InputStream;
 
 public class Pinks extends Application {
+
+    private static final Boolean DEBUG = true;
 
     private static final String FONT_FILE = "/fonts/kongtext.ttf";
 
@@ -46,6 +45,10 @@ public class Pinks extends Application {
     private int rightScore = 0;
     private Font myFont;
 
+    private Random random = new Random(System.currentTimeMillis());
+    private double paddleVelocity = BALL_SIZE / 2;
+    private double computerPaddleVelocity = BALL_SIZE / 3;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -53,43 +56,57 @@ public class Pinks extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        primaryStage.setTitle("Pinks");
+        primaryStage.setTitle("Pinks v1.o");
 
         Group root = new Group();
-        Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT, Color.rgb(0, 0, 0));
+        Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT, Color.BLACK);
         primaryStage.setScene(scene);
 
         Canvas canvas = new Canvas(SCENE_WIDTH, SCENE_HEIGHT);
         root.getChildren().add(canvas);
 
+        GraphicsContext graphicsContext = canvas.getGraphicsContext2D();
+
+        Sprite leftPaddle = new Sprite(2 * BASE_UNIT, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, computerPaddleVelocity);
+        Sprite rightPaddle = new Sprite(SCENE_WIDTH - (2 * BASE_UNIT) - BALL_SIZE, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, paddleVelocity);
+
+        double minVeloX = BALL_SIZE / 2 * 0.85;
+        double maxVeloX = BALL_SIZE / 2 * 1.15;
+
+        double minVeloY = BALL_SIZE / 2 * 0.75;
+        double maxVeloY = BALL_SIZE / 2 * 1.05;
+
+        double veloX = random.nextInt((int) (maxVeloX - minVeloX)) + minVeloX;
+        double veloY = random.nextInt((int) (maxVeloY - minVeloY)) + minVeloY;
+
+        Sprite ball = new Sprite((SCENE_WIDTH - BALL_SIZE) / 2, (SCENE_HEIGHT - BALL_SIZE) / 2, BALL_SIZE, BALL_SIZE, veloX, veloY);
+
+        if (DEBUG) {
+            System.out.println("Velocity X: " + veloX + "\nVelocity Y: " + veloY);
+        }
+
+        // set up score labels
+        Label leftScoreLabel = CreateLabel();
+        Label rightScoreLabel = CreateLabel();
+
         InputStream is = this.getClass().getResourceAsStream(FONT_FILE);
         if (is != null) {
             myFont = Font.loadFont(is, 64);
+            leftScoreLabel.setFont(myFont);
+            rightScoreLabel.setFont(myFont);
         }
         else {
             try {
-                throw new IOException("Could not load font: " + FONT_FILE);
-            } catch (IOException e) {
+                throw new Exception("Error loading font: " + FONT_FILE);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        Random random = new Random(System.currentTimeMillis());
-
-        GraphicsContext graphicsContext = canvas.getGraphicsContext2D();
-
-        Sprite leftPaddle = new Sprite(2 * BASE_UNIT, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, BALL_SIZE / 2);
-        Sprite rightPaddle = new Sprite(SCENE_WIDTH - (2 * BASE_UNIT) - BALL_SIZE, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, BALL_SIZE / 2);
-
-        Sprite ball = new Sprite((SCENE_WIDTH - BALL_SIZE) / 2, (SCENE_HEIGHT - BALL_SIZE) / 2, BALL_SIZE, BALL_SIZE, random.nextInt((int) (BALL_SIZE / 2)) + (BALL_SIZE / 4), random.nextInt((int) (BALL_SIZE / 2)) + (BALL_SIZE / 4));
-
-        // set up score labels
-        Label leftScoreLabel = CreateLabel();
         leftScoreLabel.setLayoutX((SCENE_WIDTH / 2) - 144);
-        root.getChildren().add(leftScoreLabel);
-
-        Label rightScoreLabel = CreateLabel();
         rightScoreLabel.setLayoutX((SCENE_WIDTH / 2) + 80);
+
+        root.getChildren().add(leftScoreLabel);
         root.getChildren().add(rightScoreLabel);
 
         // draw the middle line
@@ -150,36 +167,56 @@ public class Pinks extends Application {
                     rightPaddle.updateSpritePosition();
                 }
 
-                // check the collision between ball and bounds or right paddle
-//                if (ball.getX() > MARGIN_RIGHT - BALL_SIZE) {
-//                    ball.setX(MARGIN_RIGHT - BALL_SIZE);
-//                    ball.setVelX(-ball.getVelX());
-//                }
+                // move the left paddle with AI
+                double difference = (leftPaddle.getY() + (PADDLE_HEIGHT / 2)) - (ball.getY() + (BALL_SIZE / 2));
+                if (difference > 0 && difference > computerPaddleVelocity) {
+                    leftPaddle.setVelY(-(Math.abs(leftPaddle.getVelY())));
+                    leftPaddle.updateSpritePosition();
+                }
+                else if (difference < 0 && difference < -computerPaddleVelocity) {
+                    leftPaddle.setVelY(Math.abs(leftPaddle.getVelY()));
+                    leftPaddle.updateSpritePosition();
+                }
+
+                // check the collision between ball and right paddle
                 if (ball.intersects(rightPaddle)) {
                     ball.setX(MARGIN_RIGHT - BALL_SIZE);
                     ball.setVelX(-ball.getVelX());
-                    if (ball.getVelY() > 0 && inputKeys.contains("UP")){
+                    // if the paddle was still moving opposite direction then reverse the Y angle to give the ball a backward spin
+                    if (ball.getVelY() > 0 && inputKeys.contains("UP")) {
                         ball.setVelY(-ball.getVelY());
-                    } else if (ball.getVelY() < 0 && inputKeys.contains("DOWN")){
+                    }
+                    else if (ball.getVelY() < 0 && inputKeys.contains("DOWN")) {
                         ball.setVelY(-ball.getVelY());
                     }
                 }
                 else if (ball.getX() > MARGIN_RIGHT - BALL_SIZE) {
                     ball.setX(MARGIN_LEFT);
-                    ball.setY((SCENE_HEIGHT - BALL_SIZE) / 2);
+                    ball.setY(leftPaddle.getY() + (PADDLE_HEIGHT / 2) - (BALL_SIZE / 2));
                     ball.setVelX(Math.abs(ball.getVelX()));
+                    ball.setVelY(ball.getVelY() * randomReverse());
                     leftScore++;
                     leftScoreLabel.setText(Integer.toString(leftScore));
                 }
 
+                // check the collision between ball and right paddle
+                if (ball.intersects(leftPaddle)) {
+                    ball.setX(MARGIN_LEFT);
+                    ball.setVelX(-ball.getVelX());
+                }
+                else if (ball.getX() < MARGIN_LEFT) {
+                    ball.setX(MARGIN_RIGHT - BALL_SIZE);
+                    ball.setY(rightPaddle.getY() + (PADDLE_HEIGHT / 2) - (BALL_SIZE / 2));
+                    ball.setVelX(-(Math.abs(ball.getVelX())));
+                    ball.setVelY(ball.getVelY() * randomReverse());
+                    rightScore++;
+                    rightScoreLabel.setText(Integer.toString(rightScore));
+                }
+
+                // check the top and bottom bounds against the ball movement
                 if (ball.getY() > SCENE_HEIGHT - BALL_SIZE) {
                     ball.setY(SCENE_HEIGHT - BALL_SIZE);
                     ball.setVelY(-ball.getVelY());
-                }
-
-                if (ball.getX() < MARGIN_LEFT) {
-                    ball.setX(MARGIN_LEFT);
-                    ball.setVelX(-ball.getVelX());
                 }
 
                 if (ball.getY() < 0) {
@@ -195,6 +232,14 @@ public class Pinks extends Application {
                     rightPaddle.setY(0);
                 }
 
+                //check boundaries for the computer player
+                if (leftPaddle.getY() > SCENE_HEIGHT - PADDLE_HEIGHT) {
+                    leftPaddle.setY(SCENE_HEIGHT - PADDLE_HEIGHT);
+                }
+                if (leftPaddle.getY() < 0) {
+                    leftPaddle.setY(0);
+                }
+
                 // render sprites on screen
                 graphicsContext.clearRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
 
@@ -206,12 +251,17 @@ public class Pinks extends Application {
         }.start();
     }
 
+    /*** PRIVATE METHODS ***/
+
     private Label CreateLabel() {
         Label label = new Label(Integer.toString(leftScore));
-        label.setFont(myFont);
         label.setTextAlignment(TextAlignment.CENTER);
         label.setLayoutY(BASE_UNIT * 2);
         label.setTextFill(Constants.mainColor);
         return label;
+    }
+
+    private int randomReverse() {
+        return random.nextBoolean() ? 1 : -1;
     }
 }

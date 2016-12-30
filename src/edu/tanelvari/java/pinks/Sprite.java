@@ -1,6 +1,8 @@
 package edu.tanelvari.java.pinks;
 
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+
 import java.awt.geom.Rectangle2D;
 
 public class Sprite {
