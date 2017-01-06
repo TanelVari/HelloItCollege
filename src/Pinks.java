@@ -21,23 +21,22 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 import java.io.InputStream;
 
 public class Pinks extends Application {
 
-    private static final Boolean DEBUG = true;
+    private static final Boolean DEBUG = false;
 
     private static final String FONT_FILE = "/fonts/kongtext.ttf";
     private static final String CSS_FILE = "/css/Buttons.css";
 
-    private static final String PLINK_LEFT_SOUND_FILE = "sound/pinks1.mp3";
-    private static final String PLINK_RIGHT_SOUND_FILE = "sound/pinks2.mp3";
-    private static final String PLONK_TABLE_SOUND_FILE = "sound/pinks_laud.mp3";
-    private static final String SCORE_SOUND_FILE = "sound/buzz.mp3";
-    private static final String WIN_SOUND_FILE = "sound/tada.mp3";
+    private static final String PLINK_LEFT_SOUND_FILE = "/sound/pinks1.mp3";
+    private static final String PLINK_RIGHT_SOUND_FILE = "/sound/pinks2.mp3";
+    private static final String PLONK_TABLE_SOUND_FILE = "/sound/pinks_laud.mp3";
+    private static final String SCORE_SOUND_FILE = "/sound/buzz.mp3";
+    private static final String WIN_SOUND_FILE = "/sound/tada.mp3";
 
     private static final double SCENE_WIDTH = 1024;
     private static final double SCENE_HEIGHT = 768;
@@ -89,15 +88,16 @@ public class Pinks extends Application {
 
     private GraphicsContext graphicsContext;
 
-    private enum GameState{
+    private enum GameState {
         MENU,
         ONE_PLAYER,
         TWO_PLAYER,
         RESULT
     }
+
     private GameState currentGameState = GameState.MENU;
 
-    private enum Side{
+    private enum Side {
         LEFT,
         RIGHT
     }
@@ -181,7 +181,7 @@ public class Pinks extends Application {
                 new EventHandler<KeyEvent>() {
                     @Override
                     public void handle(KeyEvent e) {
-                        if (currentGameState == GameState.ONE_PLAYER || currentGameState == GameState.TWO_PLAYER){
+                        if (currentGameState == GameState.ONE_PLAYER || currentGameState == GameState.TWO_PLAYER) {
                             String code = e.getCode().toString();
                             if (!inputKeys.contains(code)) {
                                 inputKeys.add(code);
@@ -212,15 +212,15 @@ public class Pinks extends Application {
                 double elapsedTime = (currentTime - lastTime) / 1000000000.0;
                 lastTime = currentTime;
 
-                if (currentGameState == GameState.RESULT){
-                    if (accumulatedTime < TIME_TO_SHOW_BANNER){
+                if (currentGameState == GameState.RESULT) {
+                    if (accumulatedTime < TIME_TO_SHOW_BANNER) {
                         accumulatedTime += elapsedTime;
                         PlayGame(true);
                         return;
                     }
                     else {
                         accumulatedTime = 0;
-                        if (root.getChildren().contains(winnerBox)){
+                        if (root.getChildren().contains(winnerBox)) {
                             root.getChildren().remove(winnerBox);
                             winnerBox = null;
                         }
@@ -230,15 +230,15 @@ public class Pinks extends Application {
                     }
                 }
 
-                if (leftScore >= WINNING_SCORE){
+                if (leftScore >= WINNING_SCORE) {
                     ShowWinnerBox(GameEnded(Side.LEFT), root);
 
                 }
-                else if (rightScore >= WINNING_SCORE){
+                else if (rightScore >= WINNING_SCORE) {
                     ShowWinnerBox(GameEnded(Side.RIGHT), root);
                 }
 
-                switch (currentGameState){
+                switch (currentGameState) {
                     case MENU:
                         ShowMenu();
                         break;
@@ -285,10 +285,10 @@ public class Pinks extends Application {
         return font;
     }
 
-    private VBox CreateMenuBox(){
+    private VBox CreateMenuBox() {
 
         double width = SCENE_WIDTH - (26 * BASE_UNIT);
-        double height = SCENE_HEIGHT - (16* BASE_UNIT);
+        double height = SCENE_HEIGHT - (16 * BASE_UNIT);
 
         Font font = LoadCustomFont(32);
 
@@ -322,7 +322,7 @@ public class Pinks extends Application {
             @Override
             public void handle(ActionEvent event) {
                 InitGame(GameState.TWO_PLAYER);
-                if (random.nextBoolean()){
+                if (random.nextBoolean()) {
                     StartBallFromRightPaddle();
                 }
                 else {
@@ -336,7 +336,7 @@ public class Pinks extends Application {
         return vBox;
     }
 
-    private void InitGame(GameState gameState){
+    private void InitGame(GameState gameState) {
         menuVBox.setVisible(false);
 
         leftScoreLabel.setVisible(true);
@@ -347,7 +347,7 @@ public class Pinks extends Application {
 
         UpdateBallVelocity();
 
-        switch (gameState){
+        switch (gameState) {
             case ONE_PLAYER:
                 UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
                 currentGameState = GameState.ONE_PLAYER;
@@ -359,7 +359,7 @@ public class Pinks extends Application {
         }
     }
 
-    private void UpdateBallVelocity(){
+    private void UpdateBallVelocity() {
         minBallVeloX = BALL_SIZE / 2 * 0.85;
         maxBallVeloX = BALL_SIZE / 2 * 1.1;
 
@@ -374,7 +374,7 @@ public class Pinks extends Application {
         }
     }
 
-    private void ShowMenu(){
+    private void ShowMenu() {
         menuVBox.setVisible(true);
 
         leftScoreLabel.setVisible(false);
@@ -386,34 +386,34 @@ public class Pinks extends Application {
         leftScore = 0;
     }
 
-    private void PlayGame(Boolean isInDemoMode){
+    private void PlayGame(Boolean isInDemoMode) {
 
         // update the ball position
         ball.updateSpritePosition();
 
         // update the position for right paddle if applicable
-        if (!isInDemoMode){
+        if (!isInDemoMode) {
             if (inputKeys.contains("UP")) {
                 rightPaddle.setVelY(-(Math.abs(rightPaddle.getVelY())));
                 rightPaddle.updateSpritePosition();
             }
         }
 
-        if (!isInDemoMode){
+        if (!isInDemoMode) {
             if (inputKeys.contains("DOWN")) {
                 rightPaddle.setVelY(Math.abs(rightPaddle.getVelY()));
                 rightPaddle.updateSpritePosition();
             }
         }
 
-        if (!isInDemoMode && currentGameState == GameState.TWO_PLAYER){
+        if (!isInDemoMode && currentGameState == GameState.TWO_PLAYER) {
             if (inputKeys.contains("W")) {
                 leftPaddle.setVelY(-(Math.abs(leftPaddle.getVelY())));
                 leftPaddle.updateSpritePosition();
             }
         }
 
-        if (!isInDemoMode && currentGameState == GameState.TWO_PLAYER){
+        if (!isInDemoMode && currentGameState == GameState.TWO_PLAYER) {
             if (inputKeys.contains("S")) {
                 leftPaddle.setVelY(Math.abs(leftPaddle.getVelY()));
                 leftPaddle.updateSpritePosition();
@@ -422,7 +422,7 @@ public class Pinks extends Application {
 
 
         // move the left paddle in demo mode or in 2 player game
-        if (isInDemoMode || currentGameState == GameState.ONE_PLAYER){
+        if (isInDemoMode || currentGameState == GameState.ONE_PLAYER) {
             double leftPaddleDiff = (leftPaddle.getY() + (PADDLE_HEIGHT / 2)) - (ball.getY() + (BALL_SIZE / 2));
             if (leftPaddleDiff > 0 && leftPaddleDiff > leftPaddleVelocity) {
                 leftPaddle.setVelY(-(Math.abs(leftPaddle.getVelY())));
@@ -435,7 +435,7 @@ public class Pinks extends Application {
         }
 
         // move the right paddle in demo mode
-        if (isInDemoMode){
+        if (isInDemoMode) {
             double rightPaddleDiff = (rightPaddle.getY() + (PADDLE_HEIGHT / 2)) - (ball.getY() + (BALL_SIZE / 2));
             if (rightPaddleDiff > 0 && rightPaddleDiff > rightPaddleVelocity) {
                 rightPaddle.setVelY(-(Math.abs(rightPaddle.getVelY())));
@@ -451,7 +451,7 @@ public class Pinks extends Application {
         if (ball.intersects(leftPaddle)) {
             ball.setX(MARGIN_LEFT);
             ball.setVelX(-ball.getVelX());
-            if (currentGameState == GameState.TWO_PLAYER){
+            if (currentGameState == GameState.TWO_PLAYER) {
                 // if the paddle was still moving opposite direction then reverse the Y angle to give the ball a backward spin
                 if (ball.getVelY() > 0 && inputKeys.contains("W")) {
                     ball.setVelY(-ball.getVelY());
@@ -460,12 +460,12 @@ public class Pinks extends Application {
                     ball.setVelY(-ball.getVelY());
                 }
             }
-            if (!isInDemoMode){
+            if (!isInDemoMode) {
                 plinkLeftSound.play();
             }
         }
         else if (ball.getX() < MARGIN_LEFT) {
-            if (!isInDemoMode){
+            if (!isInDemoMode) {
                 scoreSound.play();
             }
             rightScore++;
@@ -483,12 +483,12 @@ public class Pinks extends Application {
             else if (ball.getVelY() < 0 && inputKeys.contains("DOWN")) {
                 ball.setVelY(-ball.getVelY());
             }
-            if (!isInDemoMode){
+            if (!isInDemoMode) {
                 plinkRightSound.play();
             }
         }
         else if (ball.getX() > MARGIN_RIGHT - BALL_SIZE) {
-            if (!isInDemoMode){
+            if (!isInDemoMode) {
                 scoreSound.play();
             }
             leftScore++;
@@ -499,7 +499,7 @@ public class Pinks extends Application {
         if (ball.getY() > SCENE_HEIGHT - BALL_SIZE) {
             ball.setY(SCENE_HEIGHT - BALL_SIZE);
             ball.setVelY(-ball.getVelY());
-            if (!isInDemoMode){
+            if (!isInDemoMode) {
                 plonkTableSound.play();
             }
         }
@@ -507,8 +507,9 @@ public class Pinks extends Application {
         if (ball.getY() < 0) {
             ball.setY(0);
             ball.setVelY(-ball.getVelY());
-            if (!isInDemoMode){
-                plonkTableSound.play();            }
+            if (!isInDemoMode) {
+                plonkTableSound.play();
+            }
         }
 
         //check boundaries for right paddle
@@ -534,37 +535,37 @@ public class Pinks extends Application {
         leftPaddle.renderSprite(graphicsContext);
         rightPaddle.renderSprite(graphicsContext);
 
-        if (!isInDemoMode){
+        if (!isInDemoMode) {
             rightScoreLabel.setText(Integer.toString(rightScore));
             leftScoreLabel.setText(Integer.toString(leftScore));
         }
     }
 
-    private void StartBallFromLeftPaddle(){
+    private void StartBallFromLeftPaddle() {
         ball.setX(MARGIN_LEFT);
         ball.setY(leftPaddle.getY() + (PADDLE_HEIGHT / 2) - (BALL_SIZE / 2));
         ball.setVelX(Math.abs(ball.getVelX()));
         ball.setVelY(ball.getVelY() * randomReverse());
     }
 
-    private void StartBallFromRightPaddle(){
+    private void StartBallFromRightPaddle() {
         ball.setX(MARGIN_RIGHT - BALL_SIZE);
         ball.setY(rightPaddle.getY() + (PADDLE_HEIGHT / 2) - (BALL_SIZE / 2));
         ball.setVelX(-(Math.abs(ball.getVelX())));
         ball.setVelY(ball.getVelY() * randomReverse());
     }
 
-    private void CenterPaddles(){
+    private void CenterPaddles() {
         leftPaddle.setY((SCENE_HEIGHT - PADDLE_HEIGHT) / 2);
         rightPaddle.setY((SCENE_HEIGHT - PADDLE_HEIGHT) / 2);
     }
 
-    private void UpdateLeftPaddleVelocity(double vel){
+    private void UpdateLeftPaddleVelocity(double vel) {
         leftPaddleVelocity = vel;
         leftPaddle.setVelY(vel);
     }
 
-    private void ShowWinnerBox(String message, Group root){
+    private void ShowWinnerBox(String message, Group root) {
         Label label = new Label(message);
         label.setTextAlignment(TextAlignment.CENTER);
         label.setTextFill(Constants.mainColor);
@@ -587,22 +588,22 @@ public class Pinks extends Application {
         root.getChildren().addAll(winnerBox);
     }
 
-    private String GameEnded(Side side){
+    private String GameEnded(Side side) {
         String message = "";
 
-        if (side == Side.LEFT){
-            if (currentGameState == GameState.ONE_PLAYER){
+        if (side == Side.LEFT) {
+            if (currentGameState == GameState.ONE_PLAYER) {
                 message = PC_WINS;
             }
-            else if (currentGameState == GameState.TWO_PLAYER){
+            else if (currentGameState == GameState.TWO_PLAYER) {
                 message = LEFT_PLAYER_WINS;
             }
         }
-        else if (side == Side.RIGHT){
-            if (currentGameState == GameState.ONE_PLAYER){
+        else if (side == Side.RIGHT) {
+            if (currentGameState == GameState.ONE_PLAYER) {
                 message = PLAYER_WINS;
             }
-            else if (currentGameState == GameState.TWO_PLAYER){
+            else if (currentGameState == GameState.TWO_PLAYER) {
                 message = RIGHT_PLAYER_WINS;
             }
         }
@@ -615,15 +616,14 @@ public class Pinks extends Application {
         return message;
     }
 
-    private void InitSounds(){
-        try{
-            plinkLeftSound = new javafx.scene.media.AudioClip(new File(PLINK_LEFT_SOUND_FILE).toURI().toString());
-            plinkRightSound = new javafx.scene.media.AudioClip(new File(PLINK_RIGHT_SOUND_FILE).toURI().toString());
-            plonkTableSound = new javafx.scene.media.AudioClip(new File(PLONK_TABLE_SOUND_FILE).toURI().toString());
-            scoreSound = new javafx.scene.media.AudioClip(new File(SCORE_SOUND_FILE).toURI().toString());
-            winSound = new javafx.scene.media.AudioClip(new File(WIN_SOUND_FILE).toURI().toString());
-        }
-        catch (Exception e){
+    private void InitSounds() {
+        try {
+            plinkLeftSound = new javafx.scene.media.AudioClip(getClass().getResource(PLINK_LEFT_SOUND_FILE).toString());
+            plinkRightSound = new javafx.scene.media.AudioClip(getClass().getResource(PLINK_RIGHT_SOUND_FILE).toString());
+            plonkTableSound = new javafx.scene.media.AudioClip(getClass().getResource(PLONK_TABLE_SOUND_FILE).toString());
+            scoreSound = new javafx.scene.media.AudioClip(getClass().getResource(SCORE_SOUND_FILE).toString());
+            winSound = new javafx.scene.media.AudioClip(getClass().getResource(WIN_SOUND_FILE).toString());
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
