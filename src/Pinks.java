@@ -23,6 +23,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
+import java.applet.AudioClip;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Random;
 import java.io.InputStream;
@@ -33,6 +37,12 @@ public class Pinks extends Application {
 
     private static final String FONT_FILE = "/fonts/kongtext.ttf";
     private static final String CSS_FILE = "/css/Buttons.css";
+
+    private static final String PLINK_LEFT_SOUND_FILE = "sound/pinks1.mp3";
+    private static final String PLINK_RIGHT_SOUND_FILE = "sound/pinks2.mp3";
+    private static final String PLONK_TABLE_SOUND_FILE = "sound/pinks_laud.mp3";
+    private static final String SCORE_SOUND_FILE = "sound/buzz.mp3";
+    private static final String WIN_SOUND_FILE = "sound/tada.mp3";
 
     private static final double SCENE_WIDTH = 1024;
     private static final double SCENE_HEIGHT = 768;
@@ -93,6 +103,12 @@ public class Pinks extends Application {
 
     private VBox menuVBox;
     private VBox winnerBox;
+
+    private javafx.scene.media.AudioClip plinkLeftSound;
+    private javafx.scene.media.AudioClip plinkRightSound;
+    private javafx.scene.media.AudioClip plonkTableSound;
+    private javafx.scene.media.AudioClip scoreSound;
+    private javafx.scene.media.AudioClip winSound;
 
     public static void main(String[] args) {
         launch(args);
@@ -156,6 +172,9 @@ public class Pinks extends Application {
         middleLine.setStroke(Constants.mainColor);
         middleLine.setStrokeDashOffset(8d);
         root.getChildren().add(middleLine);
+
+        // initialize sounds
+        InitSounds();
 
         // create the Menu box
         menuVBox = CreateMenuBox();
@@ -421,23 +440,6 @@ public class Pinks extends Application {
             }
         }
 
-        // check the collision between ball and right paddle
-        if (ball.intersects(rightPaddle)) {
-            ball.setX(MARGIN_RIGHT - BALL_SIZE);
-            ball.setVelX(-ball.getVelX());
-            // if the paddle was still moving opposite direction then reverse the Y angle to give the ball a backward spin
-            if (ball.getVelY() > 0 && inputKeys.contains("UP")) {
-                ball.setVelY(-ball.getVelY());
-            }
-            else if (ball.getVelY() < 0 && inputKeys.contains("DOWN")) {
-                ball.setVelY(-ball.getVelY());
-            }
-        }
-        else if (ball.getX() > MARGIN_RIGHT - BALL_SIZE) {
-            StartBallFromLeftPaddle();
-            leftScore++;
-        }
-
         // check the collision between ball and left paddle
         if (ball.intersects(leftPaddle)) {
             ball.setX(MARGIN_LEFT);
@@ -451,21 +453,55 @@ public class Pinks extends Application {
                     ball.setVelY(-ball.getVelY());
                 }
             }
+            if (!isInDemoMode){
+                plinkLeftSound.play();
+            }
         }
         else if (ball.getX() < MARGIN_LEFT) {
-            StartBallFromRightPaddle();
+            if (!isInDemoMode){
+                scoreSound.play();
+            }
             rightScore++;
+            StartBallFromRightPaddle();
+        }
+
+        // check the collision between ball and right paddle
+        if (ball.intersects(rightPaddle)) {
+            ball.setX(MARGIN_RIGHT - BALL_SIZE);
+            ball.setVelX(-ball.getVelX());
+            // if the paddle was still moving opposite direction then reverse the Y angle to give the ball a backward spin
+            if (ball.getVelY() > 0 && inputKeys.contains("UP")) {
+                ball.setVelY(-ball.getVelY());
+            }
+            else if (ball.getVelY() < 0 && inputKeys.contains("DOWN")) {
+                ball.setVelY(-ball.getVelY());
+            }
+            if (!isInDemoMode){
+                plinkRightSound.play();
+            }
+        }
+        else if (ball.getX() > MARGIN_RIGHT - BALL_SIZE) {
+            if (!isInDemoMode){
+                scoreSound.play();
+            }
+            leftScore++;
+            StartBallFromLeftPaddle();
         }
 
         // check the top and bottom bounds against the ball movement
         if (ball.getY() > SCENE_HEIGHT - BALL_SIZE) {
             ball.setY(SCENE_HEIGHT - BALL_SIZE);
             ball.setVelY(-ball.getVelY());
+            if (!isInDemoMode){
+                plonkTableSound.play();
+            }
         }
 
         if (ball.getY() < 0) {
             ball.setY(0);
             ball.setVelY(-ball.getVelY());
+            if (!isInDemoMode){
+                plonkTableSound.play();            }
         }
 
         //check boundaries for right paddle
@@ -564,9 +600,25 @@ public class Pinks extends Application {
             }
         }
 
+        winSound.play();
+
         UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
         currentGameState = GameState.RESULT;
 
         return message;
+    }
+
+    private void InitSounds(){
+        try{
+            plinkLeftSound = new javafx.scene.media.AudioClip(new File(PLINK_LEFT_SOUND_FILE).toURI().toString());
+            plinkRightSound = new javafx.scene.media.AudioClip(new File(PLINK_RIGHT_SOUND_FILE).toURI().toString());
+            plonkTableSound = new javafx.scene.media.AudioClip(new File(PLONK_TABLE_SOUND_FILE).toURI().toString());
+            scoreSound = new javafx.scene.media.AudioClip(new File(SCORE_SOUND_FILE).toURI().toString());
+            winSound = new javafx.scene.media.AudioClip(new File(WIN_SOUND_FILE).toURI().toString());
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }
