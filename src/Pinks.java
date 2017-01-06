@@ -158,7 +158,7 @@ public class Pinks extends Application {
         middleLine.getStrokeDashArray().addAll(24d, 16d);
         middleLine.setStrokeLineCap(StrokeLineCap.BUTT);
         middleLine.setStrokeWidth(4);
-        middleLine.setStroke(Constants.mainColor);
+        middleLine.setStroke(Constants.MAIN_COLOR);
         middleLine.setStrokeDashOffset(8d);
         root.getChildren().add(middleLine);
 
@@ -259,7 +259,7 @@ public class Pinks extends Application {
         Label label = new Label(Integer.toString(leftScore));
         label.setTextAlignment(TextAlignment.CENTER);
         label.setLayoutY(BASE_UNIT * 2);
-        label.setTextFill(Constants.mainColor);
+        label.setTextFill(Constants.MAIN_COLOR);
         return label;
     }
 
@@ -568,7 +568,7 @@ public class Pinks extends Application {
     private void ShowWinnerBox(String message, Group root) {
         Label label = new Label(message);
         label.setTextAlignment(TextAlignment.CENTER);
-        label.setTextFill(Constants.mainColor);
+        label.setTextFill(Constants.MAIN_COLOR);
 
         Font font = LoadCustomFont(24);
         label.setFont(font);

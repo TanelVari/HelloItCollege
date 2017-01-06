@@ -1,7 +1,6 @@
 package edu.tanelvari.java.pinks;
 
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 
 import java.awt.geom.Rectangle2D;
 
@@ -33,7 +32,7 @@ public class Sprite {
     }
 
     public void renderSprite(GraphicsContext gc){
-        gc.setFill(Constants.mainColor);
+        gc.setFill(Constants.MAIN_COLOR);
         gc.fillRect(posX, posY, width, height);
     }
 
