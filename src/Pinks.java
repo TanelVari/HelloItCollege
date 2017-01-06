@@ -1,9 +1,11 @@
 package edu.tanelvari.java.pinks;
 
+import com.sun.jdi.LongValue;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -41,17 +43,25 @@ public class Pinks extends Application {
 
     private static final double PADDLE_WIDTH = BASE_UNIT;
     private static final double PADDLE_HEIGHT = BASE_UNIT * 8;
-    private static final double PC_PADDLE_VELOCITY = BALL_SIZE / 8;
+    private static final double PC_PADDLE_VELOCITY = BALL_SIZE / 3;
 
     private static final double MARGIN = 2 * BASE_UNIT + PADDLE_WIDTH;
     private static final double MARGIN_LEFT = MARGIN;
     private static final double MARGIN_RIGHT = SCENE_WIDTH - MARGIN;
 
     private static final int WINNING_SCORE = 3;
+    private static final double TIME_TO_SHOW_BANNER = 3;
+
+    private static final String PC_WINS = "COMPUTER WINS";
+    private static final String PLAYER_WINS = "PLAYER WINS";
+    private static final String LEFT_PLAYER_WINS = "LEFT PLAYER WINS";
+    private static final String RIGHT_PLAYER_WINS = "RIGHT PLAYER WINS";
 
     private int leftScore = 0;
     private int rightScore = 0;
     private Font myLabelFont;
+    private double accumulatedTime;
+    private long lastTime;
 
     private Random random = new Random(System.currentTimeMillis());
     private double leftPaddleVelocity = PC_PADDLE_VELOCITY;
@@ -74,10 +84,15 @@ public class Pinks extends Application {
         TWO_PLAYER,
         RESULT
     }
+    private GameState currentGameState = GameState.MENU;
+
+    private enum Side{
+        LEFT,
+        RIGHT
+    }
 
     private VBox menuVBox;
-
-    private GameState currentGameState = GameState.MENU;
+    private VBox winnerBox;
 
     public static void main(String[] args) {
         launch(args);
@@ -146,6 +161,8 @@ public class Pinks extends Application {
         menuVBox = CreateMenuBox();
         root.getChildren().add(menuVBox);
 
+        lastTime = System.nanoTime();
+
         // show all the stuff on stage
         primaryStage.show();
 
@@ -182,21 +199,47 @@ public class Pinks extends Application {
         // define and start the timer
         new AnimationTimer() {
             @Override
-            public void handle(long arg) {
+            public void handle(long currentTime) {
 
-                if (leftScore >= WINNING_SCORE || rightScore >= WINNING_SCORE){
-                    currentGameState = GameState.RESULT;
-                    UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
+                // do the time math
+                double elapsedTime = (currentTime - lastTime) / 1000000000.0;
+                lastTime = currentTime;
+
+                if (currentGameState == GameState.RESULT){
+                    if (accumulatedTime < TIME_TO_SHOW_BANNER){
+                        accumulatedTime += elapsedTime;
+                        PlayGame(true);
+                        return;
+                    }
+                    else {
+                        accumulatedTime = 0;
+                        if (root.getChildren().contains(winnerBox)){
+                            root.getChildren().remove(winnerBox);
+                            winnerBox = null;
+                        }
+                        rightScore = 0;
+                        leftScore = 0;
+                        currentGameState = GameState.MENU;
+                    }
+                }
+
+                if (leftScore >= WINNING_SCORE){
+                    ShowWinnerBox(GameEnded(Side.LEFT), root);
+
+                }
+                else if (rightScore >= WINNING_SCORE){
+                    ShowWinnerBox(GameEnded(Side.RIGHT), root);
                 }
 
                 switch (currentGameState){
                     case MENU:
-                    case RESULT:
                         ShowMenu();
                         break;
                     case ONE_PLAYER:
                     case TWO_PLAYER:
                         PlayGame(false);
+                        break;
+                    case RESULT:
                         break;
                 }
             }
@@ -255,7 +298,7 @@ public class Pinks extends Application {
         Button computerPlayButton = new Button("1 player");
         computerPlayButton.setMinWidth(width - (2 * BASE_UNIT));
         computerPlayButton.setFont(font);
-
+        computerPlayButton.setMouseTransparent(true);
         computerPlayButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
@@ -276,6 +319,7 @@ public class Pinks extends Application {
         Button playButton = new Button("2 players");
         playButton.setMinWidth(width - (2 * BASE_UNIT));
         playButton.setFont(font);
+        playButton.setMouseTransparent(true);
         playButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -475,5 +519,54 @@ public class Pinks extends Application {
     private void UpdateLeftPaddleVelocity(double vel){
         leftPaddleVelocity = vel;
         leftPaddle.setVelY(vel);
+    }
+
+    private void ShowWinnerBox(String message, Group root){
+        Label label = new Label(message);
+        label.setTextAlignment(TextAlignment.CENTER);
+        label.setTextFill(Constants.mainColor);
+
+        Font font = LoadCustomFont(24);
+        label.setFont(font);
+
+        winnerBox = new VBox();
+        winnerBox.setMinWidth(SCENE_WIDTH);
+        winnerBox.setMinHeight(SCENE_HEIGHT);
+        winnerBox.setAlignment(Pos.CENTER);
+
+        VBox box = new VBox();
+        box.setStyle("-fx-background-color: #000000; -fx-border-color: #FFFFFF; -fx-border-width: 4;");
+        box.setPadding(new Insets(BASE_UNIT, BASE_UNIT, BASE_UNIT, BASE_UNIT));
+        box.setAlignment(Pos.CENTER);
+
+        box.getChildren().add(label);
+        winnerBox.getChildren().add(box);
+        root.getChildren().addAll(winnerBox);
+    }
+
+    private String GameEnded(Side side){
+        String message = "";
+
+        if (side == Side.LEFT){
+            if (currentGameState == GameState.ONE_PLAYER){
+                message = PC_WINS;
+            }
+            else if (currentGameState == GameState.TWO_PLAYER){
+                message = LEFT_PLAYER_WINS;
+            }
+        }
+        else if (side == Side.RIGHT){
+            if (currentGameState == GameState.ONE_PLAYER){
+                message = PLAYER_WINS;
+            }
+            else if (currentGameState == GameState.TWO_PLAYER){
+                message = RIGHT_PLAYER_WINS;
+            }
+        }
+
+        UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
+        currentGameState = GameState.RESULT;
+
+        return message;
     }
 }
