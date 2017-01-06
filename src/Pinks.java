@@ -2,7 +2,6 @@ package edu.tanelvari.java.pinks;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -14,9 +13,6 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -28,8 +24,6 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.Random;
 import java.io.InputStream;
-
-import static com.sun.corba.se.impl.util.Version.asString;
 
 public class Pinks extends Application {
 
@@ -47,6 +41,7 @@ public class Pinks extends Application {
 
     private static final double PADDLE_WIDTH = BASE_UNIT;
     private static final double PADDLE_HEIGHT = BASE_UNIT * 8;
+    private static final double PC_PADDLE_VELOCITY = BALL_SIZE / 8;
 
     private static final double MARGIN = 2 * BASE_UNIT + PADDLE_WIDTH;
     private static final double MARGIN_LEFT = MARGIN;
@@ -59,8 +54,8 @@ public class Pinks extends Application {
     private Font myLabelFont;
 
     private Random random = new Random(System.currentTimeMillis());
-    private double paddleVelocity = BALL_SIZE / 2;
-    private double computerPaddleVelocity = BALL_SIZE / 3;
+    private double leftPaddleVelocity = PC_PADDLE_VELOCITY;
+    private double rightPaddleVelocity = BALL_SIZE / 2;
 
     private Sprite ball;
     private Sprite leftPaddle;
@@ -105,8 +100,8 @@ public class Pinks extends Application {
 
         graphicsContext = canvas.getGraphicsContext2D();
 
-        leftPaddle = new Sprite(2 * BASE_UNIT, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, computerPaddleVelocity);
-        rightPaddle = new Sprite(SCENE_WIDTH - (2 * BASE_UNIT) - BALL_SIZE, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, paddleVelocity);
+        leftPaddle = new Sprite(2 * BASE_UNIT, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, leftPaddleVelocity);
+        rightPaddle = new Sprite(SCENE_WIDTH - (2 * BASE_UNIT) - BALL_SIZE, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, rightPaddleVelocity);
 
         double minVeloX = BALL_SIZE / 2 * 0.85;
         double maxVeloX = BALL_SIZE / 2 * 1.1;
@@ -166,6 +161,7 @@ public class Pinks extends Application {
                             if (!inputKeys.contains(code)) {
                                 inputKeys.add(code);
                             }
+                            //System.out.println("Key code pressed: " + code);
                         }
                     }
                 }
@@ -190,6 +186,7 @@ public class Pinks extends Application {
 
                 if (leftScore >= WINNING_SCORE || rightScore >= WINNING_SCORE){
                     currentGameState = GameState.RESULT;
+                    UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
                 }
 
                 switch (currentGameState){
@@ -262,7 +259,16 @@ public class Pinks extends Application {
         computerPlayButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
+                menuVBox.setVisible(false);
+
+                leftScoreLabel.setVisible(true);
+                rightScoreLabel.setVisible(true);
+
+                UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
+
                 currentGameState = GameState.ONE_PLAYER;
+                inputKeys.clear();
+                CenterPaddles();
                 StartBallFromRightPaddle();
             }
         });
@@ -270,6 +276,28 @@ public class Pinks extends Application {
         Button playButton = new Button("2 players");
         playButton.setMinWidth(width - (2 * BASE_UNIT));
         playButton.setFont(font);
+        playButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                menuVBox.setVisible(false);
+
+                leftScoreLabel.setVisible(true);
+                rightScoreLabel.setVisible(true);
+
+                UpdateLeftPaddleVelocity(rightPaddleVelocity);
+
+                currentGameState = GameState.TWO_PLAYER;
+                inputKeys.clear();
+                CenterPaddles();
+
+                if (random.nextBoolean()){
+                    StartBallFromRightPaddle();
+                }
+                else {
+                    StartBallFromRightPaddle();
+                }
+            }
+        });
 
         vBox.getChildren().addAll(computerPlayButton, playButton);
 
@@ -290,13 +318,6 @@ public class Pinks extends Application {
 
     private void PlayGame(Boolean isInDemoMode){
 
-        if (!isInDemoMode){
-            menuVBox.setVisible(false);
-
-            leftScoreLabel.setVisible(true);
-            rightScoreLabel.setVisible(true);
-        }
-
         // update the ball position
         ball.updateSpritePosition();
 
@@ -315,14 +336,29 @@ public class Pinks extends Application {
             }
         }
 
-        // move the left paddle in demo mode or in 2 player game
-        if (isInDemoMode || currentGameState == GameState.ONE_PLAYER){
-            double leftPaddleDiff = (leftPaddle.getY() + (PADDLE_HEIGHT / 2)) - (ball.getY() + (BALL_SIZE / 2));
-            if (leftPaddleDiff > 0 && leftPaddleDiff > computerPaddleVelocity) {
+        if (!isInDemoMode && currentGameState == GameState.TWO_PLAYER){
+            if (inputKeys.contains("W")) {
                 leftPaddle.setVelY(-(Math.abs(leftPaddle.getVelY())));
                 leftPaddle.updateSpritePosition();
             }
-            else if (leftPaddleDiff < 0 && leftPaddleDiff < -computerPaddleVelocity) {
+        }
+
+        if (!isInDemoMode && currentGameState == GameState.TWO_PLAYER){
+            if (inputKeys.contains("S")) {
+                leftPaddle.setVelY(Math.abs(leftPaddle.getVelY()));
+                leftPaddle.updateSpritePosition();
+            }
+        }
+
+
+        // move the left paddle in demo mode or in 2 player game
+        if (isInDemoMode || currentGameState == GameState.ONE_PLAYER){
+            double leftPaddleDiff = (leftPaddle.getY() + (PADDLE_HEIGHT / 2)) - (ball.getY() + (BALL_SIZE / 2));
+            if (leftPaddleDiff > 0 && leftPaddleDiff > leftPaddleVelocity) {
+                leftPaddle.setVelY(-(Math.abs(leftPaddle.getVelY())));
+                leftPaddle.updateSpritePosition();
+            }
+            else if (leftPaddleDiff < 0 && leftPaddleDiff < -leftPaddleVelocity) {
                 leftPaddle.setVelY(Math.abs(leftPaddle.getVelY()));
                 leftPaddle.updateSpritePosition();
             }
@@ -331,11 +367,11 @@ public class Pinks extends Application {
         // move the right paddle in demo mode
         if (isInDemoMode){
             double rightPaddleDiff = (rightPaddle.getY() + (PADDLE_HEIGHT / 2)) - (ball.getY() + (BALL_SIZE / 2));
-            if (rightPaddleDiff > 0 && rightPaddleDiff > paddleVelocity) {
+            if (rightPaddleDiff > 0 && rightPaddleDiff > rightPaddleVelocity) {
                 rightPaddle.setVelY(-(Math.abs(rightPaddle.getVelY())));
                 rightPaddle.updateSpritePosition();
             }
-            else if (rightPaddleDiff < 0 && rightPaddleDiff < -paddleVelocity) {
+            else if (rightPaddleDiff < 0 && rightPaddleDiff < -rightPaddleVelocity) {
                 rightPaddle.setVelY(Math.abs(rightPaddle.getVelY()));
                 rightPaddle.updateSpritePosition();
             }
@@ -362,6 +398,15 @@ public class Pinks extends Application {
         if (ball.intersects(leftPaddle)) {
             ball.setX(MARGIN_LEFT);
             ball.setVelX(-ball.getVelX());
+            if (currentGameState == GameState.TWO_PLAYER){
+                // if the paddle was still moving opposite direction then reverse the Y angle to give the ball a backward spin
+                if (ball.getVelY() > 0 && inputKeys.contains("W")) {
+                    ball.setVelY(-ball.getVelY());
+                }
+                else if (ball.getVelY() < 0 && inputKeys.contains("S")) {
+                    ball.setVelY(-ball.getVelY());
+                }
+            }
         }
         else if (ball.getX() < MARGIN_LEFT) {
             StartBallFromRightPaddle();
@@ -408,7 +453,7 @@ public class Pinks extends Application {
         }
     }
 
-    private void  StartBallFromLeftPaddle(){
+    private void StartBallFromLeftPaddle(){
         ball.setX(MARGIN_LEFT);
         ball.setY(leftPaddle.getY() + (PADDLE_HEIGHT / 2) - (BALL_SIZE / 2));
         ball.setVelX(Math.abs(ball.getVelX()));
@@ -420,5 +465,15 @@ public class Pinks extends Application {
         ball.setY(rightPaddle.getY() + (PADDLE_HEIGHT / 2) - (BALL_SIZE / 2));
         ball.setVelX(-(Math.abs(ball.getVelX())));
         ball.setVelY(ball.getVelY() * randomReverse());
+    }
+
+    private void CenterPaddles(){
+        leftPaddle.setY((SCENE_HEIGHT - PADDLE_HEIGHT) / 2);
+        rightPaddle.setY((SCENE_HEIGHT - PADDLE_HEIGHT) / 2);
+    }
+
+    private void UpdateLeftPaddleVelocity(double vel){
+        leftPaddleVelocity = vel;
+        leftPaddle.setVelY(vel);
     }
 }
