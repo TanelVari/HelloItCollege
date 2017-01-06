@@ -1,11 +1,9 @@
 package edu.tanelvari.java.pinks;
 
-import com.sun.jdi.LongValue;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -23,10 +21,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
-import java.applet.AudioClip;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Random;
 import java.io.InputStream;
@@ -66,6 +61,12 @@ public class Pinks extends Application {
     private static final String PLAYER_WINS = "PLAYER WINS";
     private static final String LEFT_PLAYER_WINS = "LEFT PLAYER WINS";
     private static final String RIGHT_PLAYER_WINS = "RIGHT PLAYER WINS";
+
+    private double minBallVeloX;
+    private double maxBallVeloX;
+
+    private double minBallVeloY;
+    private double maxBallVeloY;
 
     private int leftScore = 0;
     private int rightScore = 0;
@@ -134,20 +135,8 @@ public class Pinks extends Application {
         leftPaddle = new Sprite(2 * BASE_UNIT, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, leftPaddleVelocity);
         rightPaddle = new Sprite(SCENE_WIDTH - (2 * BASE_UNIT) - BALL_SIZE, (SCENE_HEIGHT - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0, rightPaddleVelocity);
 
-        double minVeloX = BALL_SIZE / 2 * 0.85;
-        double maxVeloX = BALL_SIZE / 2 * 1.1;
-
-        double minVeloY = BALL_SIZE / 2 * 0.8;
-        double maxVeloY = BALL_SIZE / 2 * 1.05;
-
-        double veloX = random.nextInt((int) (maxVeloX - minVeloX)) + minVeloX;
-        double veloY = random.nextInt((int) (maxVeloY - minVeloY)) + minVeloY;
-
-        ball = new Sprite((SCENE_WIDTH - BALL_SIZE) / 2, (SCENE_HEIGHT - BALL_SIZE) / 2, BALL_SIZE, BALL_SIZE, veloX, veloY);
-
-        if (DEBUG) {
-            System.out.println("Velocity X: " + veloX + "\nVelocity Y: " + veloY);
-        }
+        ball = new Sprite((SCENE_WIDTH - BALL_SIZE) / 2, (SCENE_HEIGHT - BALL_SIZE) / 2, BALL_SIZE, BALL_SIZE, 0, 0);
+        UpdateBallVelocity();
 
         // set up score labels
         leftScoreLabel = CreateLabel();
@@ -197,7 +186,6 @@ public class Pinks extends Application {
                             if (!inputKeys.contains(code)) {
                                 inputKeys.add(code);
                             }
-                            //System.out.println("Key code pressed: " + code);
                         }
                     }
                 }
@@ -321,38 +309,19 @@ public class Pinks extends Application {
         computerPlayButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                menuVBox.setVisible(false);
-
-                leftScoreLabel.setVisible(true);
-                rightScoreLabel.setVisible(true);
-
-                UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
-
-                currentGameState = GameState.ONE_PLAYER;
-                inputKeys.clear();
-                CenterPaddles();
+                InitGame(GameState.ONE_PLAYER);
                 StartBallFromRightPaddle();
             }
         });
 
-        Button playButton = new Button("2 players");
-        playButton.setMinWidth(width - (2 * BASE_UNIT));
-        playButton.setFont(font);
-        playButton.setMouseTransparent(true);
-        playButton.setOnAction(new EventHandler<ActionEvent>() {
+        Button humanPlayButton = new Button("2 players");
+        humanPlayButton.setMinWidth(width - (2 * BASE_UNIT));
+        humanPlayButton.setFont(font);
+        humanPlayButton.setMouseTransparent(true);
+        humanPlayButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                menuVBox.setVisible(false);
-
-                leftScoreLabel.setVisible(true);
-                rightScoreLabel.setVisible(true);
-
-                UpdateLeftPaddleVelocity(rightPaddleVelocity);
-
-                currentGameState = GameState.TWO_PLAYER;
-                inputKeys.clear();
-                CenterPaddles();
-
+                InitGame(GameState.TWO_PLAYER);
                 if (random.nextBoolean()){
                     StartBallFromRightPaddle();
                 }
@@ -362,9 +331,47 @@ public class Pinks extends Application {
             }
         });
 
-        vBox.getChildren().addAll(computerPlayButton, playButton);
+        vBox.getChildren().addAll(computerPlayButton, humanPlayButton);
 
         return vBox;
+    }
+
+    private void InitGame(GameState gameState){
+        menuVBox.setVisible(false);
+
+        leftScoreLabel.setVisible(true);
+        rightScoreLabel.setVisible(true);
+
+        inputKeys.clear();
+        CenterPaddles();
+
+        UpdateBallVelocity();
+
+        switch (gameState){
+            case ONE_PLAYER:
+                UpdateLeftPaddleVelocity(PC_PADDLE_VELOCITY);
+                currentGameState = GameState.ONE_PLAYER;
+                break;
+            case TWO_PLAYER:
+                UpdateLeftPaddleVelocity(rightPaddleVelocity);
+                currentGameState = GameState.TWO_PLAYER;
+                break;
+        }
+    }
+
+    private void UpdateBallVelocity(){
+        minBallVeloX = BALL_SIZE / 2 * 0.85;
+        maxBallVeloX = BALL_SIZE / 2 * 1.1;
+
+        minBallVeloY = BALL_SIZE / 2 * 0.8;
+        maxBallVeloY = BALL_SIZE / 2 * 1.05;
+
+        ball.setVelX(random.nextInt((int) (maxBallVeloX - minBallVeloX)) + minBallVeloX);
+        ball.setVelY(random.nextInt((int) (maxBallVeloY - minBallVeloY)) + minBallVeloY);
+
+        if (DEBUG) {
+            System.out.println("Velocity X: " + ball.getVelX() + "\nVelocity Y: " + ball.getVelY());
+        }
     }
 
     private void ShowMenu(){
@@ -615,7 +622,6 @@ public class Pinks extends Application {
             plonkTableSound = new javafx.scene.media.AudioClip(new File(PLONK_TABLE_SOUND_FILE).toURI().toString());
             scoreSound = new javafx.scene.media.AudioClip(new File(SCORE_SOUND_FILE).toURI().toString());
             winSound = new javafx.scene.media.AudioClip(new File(WIN_SOUND_FILE).toURI().toString());
-
         }
         catch (Exception e){
             e.printStackTrace();
