@@ -288,7 +288,7 @@ public class Pinks extends Application {
     private VBox CreateMenuBox() {
 
         double width = SCENE_WIDTH - (26 * BASE_UNIT);
-        double height = SCENE_HEIGHT - (16 * BASE_UNIT);
+        double height = SCENE_HEIGHT - (20 * BASE_UNIT);
 
         Font font = LoadCustomFont(32);
 
