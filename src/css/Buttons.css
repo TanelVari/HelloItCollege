@@ -4,6 +4,7 @@
     -fx-border-color: #000000;
     -fx-background-radius: 0;
     -fx-background-insets: 0;
+    -fx-alignment: CENTER-LEFT;
 }
 
 .button:pressed {
