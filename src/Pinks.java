@@ -53,7 +53,7 @@ public class Pinks extends Application {
     private static final double MARGIN_LEFT = MARGIN;
     private static final double MARGIN_RIGHT = SCENE_WIDTH - MARGIN;
 
-    private static final int WINNING_SCORE = 3;
+    private static final int WINNING_SCORE = 5;
     private static final double TIME_TO_SHOW_BANNER = 3;
 
     private static final String PC_WINS = "COMPUTER WINS";
